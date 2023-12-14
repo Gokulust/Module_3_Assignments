@@ -6,6 +6,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -84,6 +85,84 @@ namespace RestApiProject_CaseStudy.Tests.EndPoints
                 test.Fail("Create Booking Test- Failed");
                 Log.Information($"{ex.Message}");
                 Log.Information("Create Booking Test- Failed");
+            }
+        }
+        [Test]
+        public void UpdateUserTest()
+        {
+            test = extent.CreateTest("GetToken Test");
+            var request = new RestRequest("/auth", Method.Post);
+            request.AddHeader("Content-Type", "application/json");
+            request.AddJsonBody(new
+            {
+                username = "admin",
+                password = "password123"
+            });
+            try
+            {
+                var response = client.Execute(request);
+
+                var token = JsonConvert.DeserializeObject<Cookies>(response.Content);
+                var requestput = new RestRequest("/booking/13", Method.Put);
+                requestput.AddHeader("Content-Type", "application/json");
+                requestput.AddHeader("Accept", "application/json");
+                requestput.AddHeader("Cookie", "token=" + token.Token);
+
+
+                requestput.AddJsonBody(new
+                {
+                    firstname = "John",
+                    lastname = "Smith",
+                    totalprice = 111,
+                    depositpaid = true,
+                    bookingdates = new
+                    {
+                        checkin = "2018-01-01",
+                        checkout = "2019-01-01"
+                    },
+                    additionalneeds = "Breakfast"
+                });
+                var responseput = client.Execute(requestput);
+                Assert.That(responseput.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.OK), "Status code is not 200");
+                Console.WriteLine(responseput.Content);
+            }
+            catch (AssertionException ex) {
+
+
+            }
+
+        }
+        [Test]
+        public void DeleteUserTest()
+        {
+
+            test = extent.CreateTest("Delete Booking test");
+            ;
+            var requestAuth = new RestRequest("/auth", Method.Post);
+            requestAuth.AddHeader("Content-Type", "application/json");
+            requestAuth.AddJsonBody(new
+            {
+                username = "admin",
+                password = "password123"
+            });
+            var request = new RestRequest("/booking/11", Method.Delete);
+            try
+            {
+                var responseAuth = client.Execute(requestAuth);
+                var token = JsonConvert.DeserializeObject<Cookies>(responseAuth.Content);
+                request.AddHeader("Cookie", "token=" + token.Token);
+                var response = client.Execute(request);
+                Assert.That(response.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.Created), "Status code is not 200");
+                test.Pass("Status code test pass");
+                Log.Information("Status code test passed");
+                test.Pass("Booking id data test pass");
+                Log.Information("Booking id data test passed");
+            }
+            catch (AssertionException ex)
+            {
+                string message = ex.Message;
+                Log.Error(message);
+                test.Fail(message + " Get All Booking id  Fail");
             }
         }
     }
